@@ -17,13 +17,13 @@ It only reads local files and sends nothing anywhere.
 
 ## Features
 
-- 🗂️ **Every chat from the Code tab**, with its sidebar title, newest first, archived chats optional
-- 🔎 **Search** by title
-- 👀 **Live preview** of the Markdown before you save
-- 💾 **Export one chat**, **copy it to the clipboard**, or **export all visible chats** into a folder
-- 🔧 **Tool calls optional:** one line per call, with the result shortened inside a collapsible `<details>` block
-- 🧹 **No harness noise:** `<system-reminder>` blocks, task notifications, thinking and sub-agent sidechains are left out, and compacted context is marked
-- ⌨️ **Command line** for scripts and backups
+- **Every chat from the Code tab**, with its sidebar title, newest first, archived chats optional
+- **Search** by title
+- **Live preview** of the Markdown before you save
+- **Export one chat**, **copy it to the clipboard**, or **export all visible chats** into a folder
+- **Tool calls optional:** one line per call, with the result shortened inside a collapsible `<details>` block
+- **No harness noise:** `<system-reminder>` blocks, task notifications, thinking and sub-agent sidechains are left out, and compacted context is marked
+- **Command line** for scripts and backups
 
 <details>
 <summary><b>Screenshot with tool calls enabled</b></summary>
@@ -49,12 +49,20 @@ Can you add a dark mode toggle to the settings page? It should remember the choi
 
 Sure. I'll look at how the settings page and the theme are set up first.
 
-> 🔧 **Grep** — Find theme handling
+> Werkzeug **Grep** — Find theme handling
 ````
 
 The full sample is in [docs/example-export.md](docs/example-export.md).
 
-## Install
+## Download
+
+Grab `cc-chat-export-<version>-windows-x64.zip` from the [latest release](https://github.com/Henner4746/cc-chat-export/releases/latest),
+unzip it and start `cc-chat-export-gui.exe`. Nothing to install.
+
+The programs are not code-signed, so Windows SmartScreen may warn the first time
+(**More info → Run anyway**). Checksums are in `SHA256SUMS.txt`.
+
+## Build from source
 
 You need a Rust toolchain ([rustup.rs](https://rustup.rs)).
 

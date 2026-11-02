@@ -14,7 +14,7 @@ Can you add a dark mode toggle to the settings page? It should remember the choi
 
 Sure. I'll look at how the settings page and the theme are set up first.
 
-> 🔧 **Grep** — Find theme handling
+> Werkzeug **Grep** — Find theme handling
 
 <details><summary>Ergebnis</summary>
 
@@ -24,7 +24,7 @@ src/theme.ts:3
 ```
 </details>
 
-> 🔧 **Read** — C:\dev\demo\src\theme.ts
+> Werkzeug **Read** — C:\dev\demo\src\theme.ts
 
 <details><summary>Ergebnis</summary>
 
@@ -43,7 +43,7 @@ The app has a single `light` theme in `src/theme.ts`. Here's the plan:
 export const dark = { bg: '#121212', fg: '#eee' };
 ```
 
-> 🔧 **Edit** — C:\dev\demo\src\theme.ts
+> Werkzeug **Edit** — C:\dev\demo\src\theme.ts
 
 <details><summary>Ergebnis</summary>
 
@@ -52,7 +52,7 @@ The file has been updated.
 ```
 </details>
 
-> 🔧 **Bash** — Run the test suite
+> Werkzeug **Bash** — Run the test suite
 
 <details><summary>Ergebnis</summary>
 

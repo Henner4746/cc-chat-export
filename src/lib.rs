@@ -119,7 +119,7 @@ pub fn export(s: &Session, tools: bool) -> Result<Option<String>, String> {
                 }
                 "image" if kind == "user" => "*[Bild]*".to_string(),
                 "tool_use" if tools => {
-                    format!("> 🔧 **{}** {}", b["name"].as_str().unwrap_or("?"), tool_summary(&b["input"]))
+                    format!("> Werkzeug **{}** {}", b["name"].as_str().unwrap_or("?"), tool_summary(&b["input"]))
                 }
                 "tool_result" if tools => {
                     let body = truncate(&result_text(&b["content"]), 1500);
