@@ -19,6 +19,8 @@ pub struct Session {
     pub cwd: String,
     pub last: i64,
     pub archived: bool,
+    /// Model last picked for this chat in the app, e.g. `claude-opus-5-5`.
+    pub model: String,
 }
 
 pub fn load_sessions() -> Result<Vec<Session>, String> {
@@ -45,6 +47,7 @@ pub fn load_sessions() -> Result<Vec<Session>, String> {
                     cwd: v["cwd"].as_str().unwrap_or("").to_string(),
                     last: v["lastActivityAt"].as_i64().or(v["createdAt"].as_i64()).unwrap_or(0),
                     archived: v["isArchived"].as_bool().unwrap_or(false),
+                    model: v["model"].as_str().unwrap_or("").to_string(),
                 });
             }
         }
@@ -79,12 +82,11 @@ pub fn export(s: &Session, tools: bool) -> Result<Option<String>, String> {
     let text = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
 
     let mut md = String::new();
-    let _ = writeln!(md, "# {}\n", s.title);
-    let _ = writeln!(md, "- Ordner: `{}`", s.cwd);
-    let _ = writeln!(md, "- Zuletzt aktiv: {}", fmt_ms(s.last, "%d.%m.%Y %H:%M"));
-    let _ = writeln!(md, "- Session: `{}`\n", s.cli_id);
-
     let mut role = "";
+    // Model of the current reply, the one named in the last heading, and every model used.
+    let mut model = String::new();
+    let mut heading_model = String::new();
+    let mut used: Vec<(String, usize)> = vec![];
     for line in text.lines() {
         let Ok(rec) = serde_json::from_str::<Value>(line) else { continue };
         let kind = rec["type"].as_str().unwrap_or("");
@@ -101,6 +103,10 @@ pub fn export(s: &Session, tools: bool) -> Result<Option<String>, String> {
             _ => continue,
         };
         let time = rec["timestamp"].as_str().map(fmt_iso).unwrap_or_default();
+        // `<synthetic>` marks messages the app wrote itself, not a model.
+        if let Some(m) = rec["message"]["model"].as_str().filter(|m| kind == "assistant" && !m.starts_with('<')) {
+            model = m.to_string();
+        }
 
         for b in &blocks {
             let piece = match b["type"].as_str().unwrap_or("") {
@@ -111,10 +117,17 @@ pub fn export(s: &Session, tools: bool) -> Result<Option<String>, String> {
                     }
                     // Only real text decides whose turn it is; tool results ride along.
                     let who = if kind == "user" { "Du" } else { "Claude" };
-                    if role != who {
+                    if who == "Claude" && (role != who || heading_model != model) {
+                        match used.iter_mut().find(|(m, _)| *m == model) {
+                            Some((_, n)) => *n += 1,
+                            None => used.push((model.clone(), 1)),
+                        }
+                        let _ = write!(md, "\n## Claude · {} · {time}\n\n", model_name(&model));
+                        heading_model = model.clone();
+                    } else if role != who {
                         let _ = write!(md, "\n## {who} · {time}\n\n");
-                        role = who;
                     }
+                    role = who;
                     t
                 }
                 "image" if kind == "user" => "*[Bild]*".to_string(),
@@ -131,7 +144,64 @@ pub fn export(s: &Session, tools: bool) -> Result<Option<String>, String> {
             md.push_str("\n\n");
         }
     }
-    Ok(Some(md))
+
+    let mut head = String::new();
+    let _ = writeln!(head, "# {}\n", s.title);
+    let _ = writeln!(head, "- Ordner: `{}`", s.cwd);
+    let _ = writeln!(head, "- Zuletzt aktiv: {}", fmt_ms(s.last, "%d.%m.%Y %H:%M"));
+    if !used.is_empty() {
+        let list: Vec<String> = used
+            .iter()
+            .map(|(m, n)| format!("{} (`{m}`, {n} {})", model_name(m), if *n == 1 { "Antwort" } else { "Antworten" }))
+            .collect();
+        let _ = writeln!(head, "- Modell: {}", list.join(", "));
+    }
+    let _ = writeln!(head, "- Session: `{}`\n", s.cli_id);
+    Ok(Some(head + &md))
+}
+
+/// `claude-opus-5-5` -> `Opus 5.5`, `claude-3-5-sonnet-20241022` -> `Sonnet 3.5`.
+/// Ids that do not look like Claude models come back unchanged.
+pub fn model_name(id: &str) -> String {
+    if id.is_empty() {
+        return "unbekanntes Modell".into();
+    }
+    let core = id.split('[').next().unwrap_or(id);
+    let Some(rest) = core.strip_prefix("claude-") else { return id.to_string() };
+    let mut family = String::new();
+    let mut version = vec![];
+    for part in rest.split('-') {
+        if part.chars().all(|c| c.is_ascii_digit()) {
+            // Snapshot dates such as 20241022 are not part of the version.
+            if part.len() < 8 {
+                version.push(part);
+            }
+        } else if family.is_empty() {
+            let mut c = part.chars();
+            family = c.next().map(|f| f.to_uppercase().chain(c).collect()).unwrap_or_default();
+        }
+    }
+    match (family.is_empty(), version.is_empty()) {
+        (true, _) => id.to_string(),
+        (false, true) => family,
+        (false, false) => format!("{family} {}", version.join(".")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::model_name;
+
+    #[test]
+    fn model_names() {
+        assert_eq!(model_name("claude-opus-5-5"), "Opus 5.5");
+        assert_eq!(model_name("claude-opus-4-8"), "Opus 4.8");
+        assert_eq!(model_name("claude-sonnet-4-5-20250929"), "Sonnet 4.5");
+        assert_eq!(model_name("claude-3-5-sonnet-20241022"), "Sonnet 3.5");
+        assert_eq!(model_name("claude-fable-5-1[1m]"), "Fable 5.1");
+        assert_eq!(model_name("gpt-x"), "gpt-x");
+        assert_eq!(model_name(""), "unbekanntes Modell");
+    }
 }
 
 /// Drops the harness wrappers the app adds around real messages.

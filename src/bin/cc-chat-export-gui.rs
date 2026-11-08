@@ -2,7 +2,7 @@
 
 #![windows_subsystem = "windows"]
 
-use cc_chat_export::{export, fmt_ms, load_sessions, safe_name, Session};
+use cc_chat_export::{export, fmt_ms, load_sessions, model_name, safe_name, Session};
 use eframe::egui;
 
 fn main() -> eframe::Result {
@@ -150,7 +150,7 @@ impl eframe::App for App {
             egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
                 for i in self.visible() {
                     let s = &self.sessions[i];
-                    let text = format!("{}\n{}", s.title, fmt_ms(s.last, "%d.%m.%Y %H:%M"));
+                    let text = format!("{}\n{} · {}", s.title, fmt_ms(s.last, "%d.%m.%Y %H:%M"), model_name(&s.model));
                     if ui.selectable_label(self.selected == Some(i), text).clicked() {
                         self.selected = Some(i);
                     }

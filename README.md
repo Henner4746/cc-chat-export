@@ -20,6 +20,7 @@ It only reads local files and sends nothing anywhere.
 - **Every chat from the Code tab**, with its sidebar title, newest first, archived chats optional
 - **Search** by title
 - **Live preview** of the Markdown before you save
+- **Which model answered:** every Claude reply is headed with its model (Opus 5.5, Sonnet 5.5, ...), switches mid-chat included, and the export header sums up the models used. The chat list shows the model last picked for each chat in the app
 - **Export one chat**, **copy it to the clipboard**, or **export all visible chats** into a folder
 - **Tool calls optional:** one line per call, with the result shortened inside a collapsible `<details>` block
 - **No harness noise:** `<system-reminder>` blocks, task notifications, thinking and sub-agent sidechains are left out, and compacted context is marked
@@ -38,14 +39,15 @@ It only reads local files and sends nothing anywhere.
 # Add dark mode to the settings page
 
 - Ordner: `C:\dev\demo`
-- Zuletzt aktiv: 02.11.2026 19:18
-- Session: `8615c5b7-46ad-4d56-a28d-8ef607ff6eb3`
+- Zuletzt aktiv: 08.11.2026 15:32
+- Modell: Opus 5.5 (`claude-opus-5-5`, 1 Antwort), Sonnet 5.5 (`claude-sonnet-5-5`, 1 Antwort)
+- Session: `56f33aa7-680f-459a-9258-e59b6130d7b7`
 
-## Du · 02.11.2026 19:09
+## Du · 08.11.2026 15:22
 
 Can you add a dark mode toggle to the settings page? It should remember the choice.
 
-## Claude · 02.11.2026 19:09
+## Claude · Opus 5.5 · 08.11.2026 15:23
 
 Sure. I'll look at how the settings page and the theme are set up first.
 
@@ -94,7 +96,7 @@ cc-chat-export-gui [--tools] [--open TITLE] [SEARCH]
 ### Command line
 
 ```
-cc-chat-export [list] [--archived]              list chats, newest first
+cc-chat-export [list] [--archived]              list chats with their model, newest first
 cc-chat-export <pick> [-o FILE] [--tools]       export one chat (to stdout without -o)
       <pick> = number from the list, session id (a prefix is enough) or part of the title
 cc-chat-export --all -o DIR [--archived] [--tools]

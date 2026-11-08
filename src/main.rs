@@ -1,7 +1,8 @@
 //! Command-line front end.
 
-use cc_chat_export::{export, fmt_ms, load_sessions, safe_name, Session};
+use cc_chat_export::{export, fmt_ms, load_sessions, model_name, safe_name, Session};
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -58,9 +59,14 @@ fn run() -> Result<(), String> {
 
     match opts.rest.first().map(String::as_str) {
         None | Some("list") => {
+            // writeln! instead of println!, so `| head` ends the list instead of panicking.
+            let mut out = std::io::stdout().lock();
             for (i, s) in visible.iter().enumerate() {
                 let mark = if s.archived { " [archiviert]" } else { "" };
-                println!("{:>3}  {}  {}{}", i + 1, fmt_ms(s.last, "%d.%m.%Y %H:%M"), s.title, mark);
+                let line = format!("{:>3}  {}  {:<12}  {}{}", i + 1, fmt_ms(s.last, "%d.%m.%Y %H:%M"), model_name(&s.model), s.title, mark);
+                if writeln!(out, "{line}").is_err() {
+                    break;
+                }
             }
             Ok(())
         }
@@ -73,7 +79,9 @@ fn run() -> Result<(), String> {
                     fs::write(p, md).map_err(|e| format!("{}: {e}", p.display()))?;
                     eprintln!("„{}“ → {}", s.title, p.display());
                 }
-                None => print!("{md}"),
+                None => {
+                    let _ = std::io::stdout().lock().write_all(md.as_bytes());
+                }
             }
             Ok(())
         }

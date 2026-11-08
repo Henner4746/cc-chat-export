@@ -55,16 +55,23 @@ chats = [
     ("Set up the release workflow", [("user", "Can you set up releases on tag push?"), ("assistant", "Added a workflow that builds and attaches binaries on every `v*` tag.")]),
 ]
 
+MODELS = ["claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5", "claude-opus-4-8"]
+
 for n, (title, msgs) in enumerate(chats):
     cli = str(uuid.uuid4())
     last = now - n * 5_400_000
+    model = MODELS[n % len(MODELS)]
     meta = {"sessionId": f"local_{uuid.uuid4()}", "cliSessionId": cli, "cwd": r"C:\dev\demo",
-            "title": title, "createdAt": last - 600_000, "lastActivityAt": last, "isArchived": False}
+            "title": title, "createdAt": last - 600_000, "lastActivityAt": last, "isArchived": False,
+            "model": model}
     (sessions / f"{meta['sessionId']}.json").write_text(json.dumps(meta), encoding="utf8")
     with open(projects / f"{cli}.jsonl", "w", encoding="utf8") as f:
         t = last - 600_000
-        for role, content in msgs:
+        for i, (role, content) in enumerate(msgs):
             t += 40_000
-            f.write(json.dumps({"type": role, "timestamp": iso(t),
-                                "message": {"role": role, "content": content}}) + "\n")
+            message = {"role": role, "content": content}
+            if role == "assistant":
+                # The first chat switches model for its last reply, to show a switch in the export.
+                message["model"] = "claude-sonnet-5-5" if n == 0 and i == len(msgs) - 1 else model
+            f.write(json.dumps({"type": role, "timestamp": iso(t), "message": message}) + "\n")
 print(f"{len(chats)} demo chats in {root}")
